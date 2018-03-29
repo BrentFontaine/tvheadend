@@ -313,6 +313,23 @@ static int _eit_desc_component
 static int _eit_desc_content
   ( epggrab_module_t *mod, const uint8_t *ptr, int len, eit_event_t *ev )
 {
+  // Disnetwork / Bell Expressvu
+  const unsigned char *data = ptr;
+  if ( !ev->genre && data[0] > 0xF0 && data[0] < 0xF9 )
+  {
+     ev->genre = calloc(1, sizeof(epg_genre_list_t));
+     if ( data[0] == 0xF1 ) epg_genre_list_add_by_eit(ev->genre, 0x10);  // Movies
+     if ( data[0] == 0xF2 ) epg_genre_list_add_by_eit(ev->genre, 0x40);  // Sports
+     if ( data[0] == 0xF3 ) epg_genre_list_add_by_eit(ev->genre, 0x20);  // News
+     if ( data[0] == 0xF4 ) epg_genre_list_add_by_eit(ev->genre, 0x50);  // Children
+     if ( data[0] == 0xF5 ) epg_genre_list_add_by_eit(ev->genre, 0x90);  // Education
+     if ( data[0] == 0xF6 ) epg_genre_list_add_by_eit(ev->genre, 0x30);  // Series
+     if ( data[0] == 0xF7 ) epg_genre_list_add_by_eit(ev->genre, 0x60);  // Music
+     if ( data[0] == 0xF8 ) epg_genre_list_add_by_eit(ev->genre, 0x70);  // Religous
+
+     return 0;
+  }
+      
   while (len > 1) {
     if (*ptr == 0xb1)
       ev->bw = 1;
@@ -490,13 +507,14 @@ static int _eit_process_event_one
         r = _eit_desc_component(mod, ptr, dlen, &ev);
         break;
       case DVB_DESC_PARENTAL_RAT:
+      case DVB_DESC_DISHNET_MPAA:
         r = _eit_desc_parental(mod, ptr, dlen, &ev);
         break;
       case DVB_DESC_CRID:
         r = _eit_desc_crid(mod, ptr, dlen, &ev, svc);
         break;
       //case DVB_DESC_DISHNET_PROGID:
-      //  r = _eit_desc_crid(mod, ptr, dlen, &ev, svc);
+      //  r = _eit_dishnet_desc_crid(mod, ptr, dlen, &ev, svc);
       //  break;
       default:
         r = 0;
