@@ -315,9 +315,10 @@ static int _eit_desc_content
 {
   // Disnetwork / Bell Expressvu
   const unsigned char *data = ptr;
-  if ( !ev->genre && data[0] > 0xF0 && data[0] < 0xF9 )
+  if ( !ev->genre && data[0] >= 0xF0 && data[0] <= 0xF8 )
   {
      ev->genre = calloc(1, sizeof(epg_genre_list_t));
+     if ( data[0] == 0xF0 ) epg_genre_list_add_by_eit(ev->genre, 0xA0);  // Paid programming
      if ( data[0] == 0xF1 ) epg_genre_list_add_by_eit(ev->genre, 0x10);  // Movies
      if ( data[0] == 0xF2 ) epg_genre_list_add_by_eit(ev->genre, 0x40);  // Sports
      if ( data[0] == 0xF3 ) epg_genre_list_add_by_eit(ev->genre, 0x20);  // News
