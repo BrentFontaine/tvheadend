@@ -198,6 +198,23 @@ linuxdvb_switch_tune
       return 0;
   }
   
+  if (!strcmp(ld->ld_type ?: "", "Legacy SW42")) {
+      if ( ls->ls_uncommitted % 2 == 0 )
+          cmd = 0x46;
+      else
+          cmd = 0x17;
+      
+      if (ioctl(fd, FE_DISHNETWORK_SEND_LEGACY_CMD, cmd)){
+          tvherror(LS_DISEQC, "failed to issue legacy switch command (e=%s)", strerror(errno));
+          return -1;
+      }
+      
+      /* sleep for 240 milliseconds */
+      usleep(240 * 1000);
+      
+      return 0;
+  }
+  
   if (lsp->ls_diseqc_full || lsp->ls_last_switch != sc ||
       (ls->ls_committed >= 0 &&
         (pol + 1 != lsp->ls_last_switch_pol ||
@@ -283,6 +300,7 @@ linuxdvb_switch_list ( void *o, const char *lang )
   htsmsg_add_msg(m, NULL, htsmsg_create_key_val("", tvh_gettext_lang(lang, N_("None"))));
   htsmsg_add_msg(m, NULL, htsmsg_create_key_val("Generic", tvh_gettext_lang(lang, N_("Generic"))));
   htsmsg_add_msg(m, NULL, htsmsg_create_key_val("Legacy SW21", tvh_gettext_lang(lang, N_("Legacy SW21"))));
+  htsmsg_add_msg(m, NULL, htsmsg_create_key_val("Legacy SW42", tvh_gettext_lang(lang, N_("Legacy SW42"))));
   return m;
 }
 
@@ -291,7 +309,7 @@ linuxdvb_switch_create0
   ( const char *name, htsmsg_t *conf, linuxdvb_satconf_ele_t *ls, int c, int u )
 {
   linuxdvb_switch_t *ld = NULL;
-  if (!strcmp(name ?: "", "Generic") || !strcmp(name ?: "", "Legacy SW21")) {
+  if (!strcmp(name ?: "", "Generic") || !strcmp(name ?: "", "Legacy SW21") || !strcmp(name ?: "", "Legacy SW42")) {
     ld = (linuxdvb_switch_t*)linuxdvb_diseqc_create(linuxdvb_switch, NULL, conf, name, ls);
     if (ld) {
       ld->ld_tune = linuxdvb_switch_tune;
